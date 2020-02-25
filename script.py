@@ -21,24 +21,41 @@ def get_details(html, category):
     try:
         sku = html.select('td')[0].get_text().strip()
         stamp['sku'] = sku
-    except Exception as e: 
-        print(e)
+    except:
         pass
+    
+    
+    sg = None
+    item_value = None
+    if(len(html.select('td')) > 4):
+        raw_text_index = 3 
+        price_index = 5
+        image_index = 4 
+        try:
+            sg = html.select('td')[1].get_text().strip()
+        except: 
+            pass
+        
+        try:
+            item_value = html.select('td')[2].get_text().strip()
+        except: 
+            pass
+    else:
+        raw_text_index = 1 
+        price_index = 3 
+        image_index = 2 
+    
+    stamp['sg'] = sg
+    stamp['item'] = item_value
         
     try:
-        sg = html.select('td')[1].get_text().strip()
-        stamp['sg'] = sg
-    except: 
-        stamp['sg'] = None        
-
-    try:
-        raw_text = html.select('td')[2].get_text().strip()
+        raw_text = html.select('td')[raw_text_index].get_text().strip()
         stamp['raw_text'] = raw_text
     except:
         stamp['raw_text'] = None 
     
     try:
-        price = html.select('td')[4].get_text().strip()
+        price = html.select('td')[price_index].get_text().strip()
         stamp['price'] = price
     except:
         stamp['price'] = None  
@@ -48,7 +65,7 @@ def get_details(html, category):
     # image_urls should be a list
     images = []                    
     try:
-        img_cont = html.select('td')[3]
+        img_cont = html.select('td')[image_index]
         img = img_cont.select('a')[0].get('href')
         images.append(img)
     except:
@@ -89,7 +106,8 @@ def get_page_items(url):
         if table_cont:
             for item in table_cont.select('tr'):
                 item_width = int(item.select('td')[0].get('width'))
-                if (item not in items) and (len(item.select('td')) > 6) and (item_width == 60):
+                td0 = item.select('td')[0].get_text().strip()
+                if (item not in items) and (len(item.select('td')) > 3) and ((item_width == 60) or (item_width == 55)) and (td0 !='Item ID'):
                     items.append(item)
     except:
         pass
@@ -97,7 +115,8 @@ def get_page_items(url):
     try:
         next_cont = html.find_all('p', attrs={'align':'right'})[0]
         next_url_href = next_cont.select('a')[0].get('href')
-        if next_url_href != '#':
+        next_url_text = next_cont.get_text().strip()
+        if (next_url_href != '#') and ('Top of Page' not in next_url_text) and ('Back to Top' not in next_url_text):
             url_parts = url.split('/')
             next_url = url.replace(url_parts[-1], next_url_href)
     except:
@@ -109,7 +128,7 @@ def get_page_items(url):
 
 def get_categories():
     
-    url = 'http://www.africastamps.co.uk/'
+    url = 'http://www.africastamps.co.uk/singleitems.html'
     
     items = []
 
@@ -120,10 +139,12 @@ def get_categories():
         return items
 
     try:
-        for item in html.select('table table td > a'):
-            item_link = item.get('href')
-            item_parts = item_link.split('/')
-            if (item_link not in items) and (len(item_parts) == 6): 
+        for item in html.select('table table td a'):
+            item_href = item.get('href')
+            item_link = 'http://www.africastamps.co.uk/' + item_href
+            item_parts = item_href.split('/')
+            if (item_link not in items) and (len(item_parts) == 3): 
+                print(item_link)
                 items.append(item_link)
     except: 
         pass
