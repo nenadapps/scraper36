@@ -50,7 +50,7 @@ def get_details(html, category):
         
     try:
         raw_text = html.select('td')[raw_text_index].get_text().strip()
-        stamp['raw_text'] = raw_text
+        stamp['raw_text'] = raw_text.replace('"',"'")
     except:
         stamp['raw_text'] = None 
     
